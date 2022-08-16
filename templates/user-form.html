@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}New User{% endblock %}
+
+{% block content %}
+
+<h1>
+  {% if type == 'new' %}
+  Create user
+  {% elif type =='edit' %}
+  Edit user
+  {% endif %}
+</h1>
+
+<div class="row">
+  <form action="/users/{% if type == 'new' %}new
+  {% elif type =='edit' %}{{user.id}}/edit
+  {% endif %}" method="post" class="col-4">
+    <label class="form-label" for="first-name">First Name</label>
+    <input name="first-name" class="form-control" type="text" placeholder="Enter a first name"
+      value="{{user.first_name}}" />
+    <label class="form-label" for="last-name">Last Name</label>
+    <input name="last-name" class="form-control" type="text" placeholder="Enter a last name"
+      value="{{user.last_name}}" />
+    <label class="form-label" for="image-url">Image URL</label>
+    <input name="image-url" class="form-control" type="text" placeholder="Provide an image of this user"
+      value="{{user.image_url}}"> <br>
+    <div class="float-end">
+      {% if type == 'new' %}
+      <input class="btn btn-success btn-sm float-end" type="submit" value="Submit" />
+      {% elif type =='edit' %}
+      <a href="/users/{{user.id}}" class="btn btn-outline-success btn-sm me-2">Cancel</a>
+      <input class="btn btn-success btn-sm float-end" type="submit" value="Save" />
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

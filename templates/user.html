@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}{{user.full_name}}{% endblock %}
+
+{% block content %}
+<style>
+  .profile-pic {
+    object-fit: none;
+    object-position: center;
+    max-width: 250px;
+    max-height: 250px;
+    margin-bottom: 1rem;
+  }
+</style>
+<div class="d-flex profile-pic"><img src="{{user.image_url}}" alt="" class="img-fluid"></div>
+<div class="d-inline">
+  <h2>{{user.full_name}}</h2>
+  <div>
+    <form action="/users/{{user.id}}/delete" method="post">
+      <a href="/users/{{user.id}}/edit" class="btn btn-primary btn-sm">Edit</a>
+      <input type="submit" class="btn btn-danger btn-sm" value="Delete">
+    </form>
+  </div>
+
+</div>
+
+{% endblock %}
