@@ -24,11 +24,17 @@
     <label class="form-label" for="image-url">Image URL</label>
     <input name="image-url" class="form-control" type="text" placeholder="Provide an image of this user"
       value="{{user.image_url}}"> <br>
+    <div>
+      {% for msg in get_flashed_messages() %}
+      <p>{{msg}}</p>
+      {% endfor %}
+    </div>
     <div class="float-end">
+      <a href="/users/{{user.id}}" class="btn btn-outline-success btn-sm me-2">Cancel</a>
       {% if type == 'new' %}
       <input class="btn btn-success btn-sm float-end" type="submit" value="Submit" />
       {% elif type =='edit' %}
-      <a href="/users/{{user.id}}" class="btn btn-outline-success btn-sm me-2">Cancel</a>
+
       <input class="btn btn-success btn-sm float-end" type="submit" value="Save" />
       {% endif %}
     </div>

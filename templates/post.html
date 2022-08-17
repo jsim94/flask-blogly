@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{{post.title}}{% endblock %}
+
+{% block content %}
+<div class="mb-2">
+  <div class="mb-2">
+    <h2>{{post.title}}</h2>
+    <span class="text-muted">{{post.str_date}}</span>
+  </div>
+
+  <p>{{post.content}}</p>
+  <span class="text-muted fst-italic">By {{post.user.full_name}} {% if post.last_edit_time %}<br>Last
+    edited: {{post.str_last_edit}} {% endif %}</span>
+</div>
+<form>
+  <button class="btn btn-outline-primary btn-sm" formmethod="GET" formaction="/users/{{post.user_id}}">Cancel</button>
+  <button class="btn btn-primary btn-sm" formmethod="GET" formaction="/posts/{{post.id}}/edit">Edit</button>
+  <button class="btn btn-danger btn-sm" formmethod="POST" formaction="/posts/{{post.id}}/delete">Delete</button>
+</form>
+{% endblock %}
