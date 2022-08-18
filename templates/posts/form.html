@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %} - New Post{% endblock %}
+
+{% block content %}
+
+<h1>
+  {% if type == 'new' %}
+  Add Post for {{user.full_name}}
+  {% elif type =='edit' %}
+  Edit Post
+  {% endif %}
+</h1>
+
+<div class="row">
+  <form
+    action="{% if type == 'new' %}/users/{{user.id}}/posts/new{% elif type =='edit' %}/posts/{{post.id}}/edit{% endif %}"
+    method="post" class="col-4">
+    <div class="mb-2">
+      <label class="form-label" for="title">Title</label>
+      <input name="title" id="title" class="form-control" type="text" placeholder="Enter a post title"
+        value="{{post.title}}" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label" for="content">Post Content</label>
+      <textarea name="content" id="content" class="form-control" placeholder="Enter your post content"
+        rows="3">{{post.content}}</textarea>
+    </div>
+
+    <div>
+      {% for tag in tags %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="tags" value="{{tag.name}}" id="{{tag.name}}-checkbox" {%if
+          tag in tag_list %}checked{% endif %}>
+        <label class="form-check-label" for="{{tag.name}}-checkbox">
+          {{tag.name}}
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div>
+      {% for msg in get_flashed_messages() %}
+      <p>{{msg}}</p>
+      {% endfor %}
+    </div>
+    <div class="float-end">
+      <a href="{% if type == 'new' %}/users/{{user.id}}{% elif type == 'edit' %}/posts/{{post.id}}{% endif %}"
+        class="btn btn-outline-success btn-sm me-2">Cancel</a>
+      <input class="btn btn-success btn-sm float-end" type="submit" value="Save" />
+    </div>
+  </form>
+</div>
+
+{% endblock %}

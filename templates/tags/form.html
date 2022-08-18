@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %} - New Tag{% endblock %}
+
+{% block content %}
+
+<h1>
+  {% if type == 'new' %}
+  Create a Tag
+  {% elif type =='edit' %}
+  Edit Tag
+  {% endif %}
+</h1>
+
+<div class="row">
+  <form action="/tags/{% if type == 'new' %}new
+  {% elif type =='edit' %}{{tag.id}}/edit
+  {% endif %}" method="post" class="col-4">
+    <label class="form-label" for="name">Name</label>
+    <input name="name" class="form-control" type="text" placeholder="Enter a tag name" value="{{tag.name}}" />
+    <div>
+      {% for msg in get_flashed_messages() %}
+      <p>{{msg}}</p>
+      {% endfor %}
+    </div>
+    <div class="float-end mt-2">
+      <a href="/tags" class="btn btn-outline-success btn-sm me-2">Cancel</a>
+      <input class="btn btn-success btn-sm float-end" type="submit" value="Save" />
+    </div>
+  </form>
+</div>
+{% endblock %}

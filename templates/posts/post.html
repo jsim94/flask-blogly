@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{post.title}}{% endblock %}
+{% block title %} - {{post.title}}{% endblock %}
 
 {% block content %}
 <div class="mb-2">
@@ -9,9 +9,17 @@
   </div>
 
   <p>{{post.content}}</p>
-  <span class="text-muted fst-italic">By {{post.user.full_name}} {% if post.last_edit_time %}<br>Last
-    edited: {{post.str_last_edit}} {% endif %}</span>
+  <span class="text-muted fst-italic">By {{post.user.full_name}} {% if post.clean_last_edit %}<br>Last
+    edited: {{post.clean_last_edit}} {% endif %}</span>
 </div>
+{% if post.tags %}
+<div class="mb-2">
+  <span class="h6 fw-bold">Tags:</h5></span>
+  {% for tag in post.tags %}
+  <a href="/tags/{{tag.name}}" class="p-0 btn btn-primary btn-sm fw-bold">{{tag.name}}</a>
+  {% endfor %}
+</div>
+{% endif %}
 <form>
   <button class="btn btn-outline-primary btn-sm" formmethod="GET" formaction="/users/{{post.user_id}}">Cancel</button>
   <button class="btn btn-primary btn-sm" formmethod="GET" formaction="/posts/{{post.id}}/edit">Edit</button>

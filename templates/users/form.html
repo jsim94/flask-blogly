@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}New User{% endblock %}
+{% block title %} - New User{% endblock %}
 
 {% block content %}
 
@@ -30,13 +30,9 @@
       {% endfor %}
     </div>
     <div class="float-end">
-      <a href="/users/{{user.id}}" class="btn btn-outline-success btn-sm me-2">Cancel</a>
-      {% if type == 'new' %}
-      <input class="btn btn-success btn-sm float-end" type="submit" value="Submit" />
-      {% elif type =='edit' %}
-
+      <a href="{% if type == 'new' %}/users{% elif type == 'edit' %}/users/{{user.id}}{% endif %}"
+        class="btn btn-outline-success btn-sm me-2">Cancel</a>
       <input class="btn btn-success btn-sm float-end" type="submit" value="Save" />
-      {% endif %}
     </div>
   </form>
 </div>

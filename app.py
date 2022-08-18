@@ -1,7 +1,8 @@
 """Blogly application."""
 import datetime
 from flask import Flask, render_template, request, redirect, flash
-from models import db, connect_db, User, Post
+from models import db, connect_db, User, Post, Tag
+import validations as validate
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ahdlkhawkedhwa'
@@ -14,45 +15,11 @@ db.create_all()
 
 NULL_USER = {'first_name': '', 'last_name': '', 'image_url': ''}
 NULL_POST = {'title': '', 'content': ''}
+NULL_TAG = {'name': ''}
 
-
-def add_edit_user(first_name, last_name, image_url, user=None):
-    '''If user=none, adds new user and commits to db, otherwise updates existing user. Returns false if required fields are None'''
-
-    if not first_name or not last_name:
-        flash("First and last name required!")
-        return False
-
-    if user:
-        user.first_name = first_name
-        user.last_name = last_name
-        user.image_url = image_url
-    else:
-        user = User(first_name=first_name,
-                    last_name=last_name, image_url=image_url)
-
-    db.session.add(user)
-    db.session.commit()
-    return True
-
-
-def add_edit_post(title, content, user_id, post=None):
-    '''If post=none, adds new post and commits to db, otherwise updates existing post. Returns false if required fields are None'''
-    if not title:
-        flash("Title required!")
-        return False
-
-    if post:
-        post.title = title
-        post.content = content
-        post.last_edit_time = datetime.datetime.now()
-    else:
-        post = Post(title=title,
-                    content=content, user_id=user_id)
-
-    db.session.add(post)
-    db.session.commit()
-    return True
+############################################################################
+#  HOME ROUTES
+############################################################################
 
 
 @app.errorhandler(404)
@@ -63,7 +30,7 @@ def page_not_found(e):
 @app.route('/')
 def home():
     posts = Post.query.all()
-    return render_template('home.html', posts=posts)
+    return render_template('posts/list.html', posts=posts)
 
 
 ############################################################################
@@ -73,24 +40,31 @@ def home():
 @app.route('/users')
 def home_route():
     users = User.query.order_by(User.last_name, User.first_name).all()
-    return render_template('user-list.html', users=users)
+    return render_template('users/list.html', users=users)
 
 
 @app.route('/users/<int:uid>')
 def user(uid):
     user = User.query.get_or_404(uid)
-    return render_template('user.html', user=user)
+    return render_template('users/user.html', user=user)
 
 
 @app.route('/users/new', methods=['GET', 'POST'])
 def new_user():
     if request.method == 'GET':
-        return render_template('user-form.html', user=NULL_USER, type="new")
+        return render_template('users/form.html', user=NULL_USER, type="new")
     if request.method == 'POST':
+        first_name = request.form['first-name']
+        last_name = request.form['last-name']
+        image_url = request.form['image-url']
 
-        if not add_edit_user(first_name=request.form['first-name'], last_name=request.form['last-name'], image_url=request.form['image-url']):
+        msg = validate.user_input(first_name, last_name)
+        if msg:
+            flash(msg)
             return redirect('/users/new')
 
+        User.add(first_name=first_name,
+                 last_name=last_name, image_url=image_url)
         return redirect(f'/users')
 
 
@@ -98,13 +72,21 @@ def new_user():
 def edit_user(uid):
     user = User.query.get_or_404(uid)
     if request.method == 'GET':
-        return render_template('user-form.html', user=user, type="edit")
+        return render_template('users/form.html', user=user, type="edit")
     if request.method == 'POST':
+        first_name = request.form['first-name']
+        last_name = request.form['last-name']
+        image_url = request.form['image-url']
 
-        if not add_edit_user(first_name=request.form['first-name'], last_name=request.form['last-name'], image_url=request.form['image-url'], user=user):
-            return redirect('/users/{uid}/edit')
+        msg = validate.user_input(first_name, last_name)
+        if msg:
+            flash(msg)
+            return redirect(f'/users/{uid}/edit')
 
-        return redirect(f'/users')
+        user.update(first_name=first_name,
+                    last_name=last_name, image_url=image_url)
+
+        return redirect(f'/users/{uid}')
 
 
 @app.route('/users/<int:uid>/delete', methods=['POST'])
@@ -122,18 +104,27 @@ def delete_user(uid):
 @app.route('/posts/<int:pid>')
 def show_post(pid):
     post = Post.query.get_or_404(pid)
-    return render_template('post.html', post=post)
+    return render_template('posts/post.html', post=post)
 
 
 @app.route('/users/<uid>/posts/new', methods=['GET', 'POST'])
 def new_post(uid):
     user = User.query.get_or_404(uid)
+    tags = Tag.query.all()
     if request.method == 'GET':
-        return render_template('post-form.html', user=user, post=NULL_POST, type="new")
+        return render_template('posts/form.html', user=user, post=NULL_POST, tags=tags, tag_list=[], type="new")
     if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        tag_list = request.form.getlist('tags')
 
-        if not add_edit_post(title=request.form['title'], content=request.form['content'], user_id=uid):
+        msg = validate.post_input(title=title)
+        if msg:
+            flash(msg)
             return redirect(f'/users/{uid}/posts/new')
+
+        Post.add(title=title,
+                 content=content, user_id=uid, tag_list=tag_list)
 
         return redirect(f'/users/{uid}')
 
@@ -141,12 +132,20 @@ def new_post(uid):
 @app.route('/posts/<int:pid>/edit', methods=['GET', 'POST'])
 def edit_post(pid):
     post = Post.query.get_or_404(pid)
+    tags = Tag.query.all()
     if request.method == 'GET':
-        return render_template('post-form.html', user=post.user, post=post, type="edit")
+        return render_template('posts/form.html', user=post.user, post=post, tags=tags, tag_list=post.tags, type="edit")
     if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        tag_list = request.form.getlist('tags')
 
-        if not add_edit_post(title=request.form['title'], content=request.form['content'], user_id=post.user_id, post=post):
-            return redirect(f'/posts/{pid}/edit')
+        msg = validate.post_input(title=title)
+        if msg:
+            flash(msg)
+            return redirect(f'/posts/{post.user_id}/edit/posts/new')
+
+        post.update(title=title, content=content, tag_list=tag_list)
 
         return redirect(f'/posts/{post.id}')
 
@@ -157,3 +156,62 @@ def delete_post(pid):
     db.session.delete(post)
     db.session.commit()
     return redirect(f'/users/{post.user_id}')
+
+
+############################################################################
+#  TAG ROUTES
+############################################################################
+
+@app.route('/tags')
+def show_tags_list():
+    tags = Tag.query.all()
+    return render_template('tags/list.html', tags=tags)
+
+
+@app.route('/tags/<tid>')
+def show_tag(tid):
+    tag = Tag.query.get_or_404(tid)
+    return render_template('tags/tag.html', tag=tag)
+
+
+@app.route('/tags/new', methods=['GET', 'POST'])
+def new_tag():
+    if request.method == 'GET':
+        return render_template('tags/form.html', tag=NULL_TAG, type="new")
+    if request.method == 'POST':
+        name = request.form['name']
+
+        msg = validate.tag_input(name=name)
+        if msg:
+            flash(msg)
+            return redirect(f'/tags/new')
+
+        Tag.add(name=name)
+
+        return redirect(f'/tags')
+
+
+@app.route('/tags/<tid>/edit', methods=['GET', 'POST'])
+def edit_tag(tid):
+    tag = Tag.query.get_or_404(tid)
+    if request.method == 'GET':
+        return render_template('tags/form.html', tag=tag, type="edit")
+    if request.method == 'POST':
+        name = request.form['name']
+
+        msg = validate.tag_input(name=name)
+        if msg:
+            flash(msg)
+            return redirect(f'/tags/new')
+
+        tag.update(name=name)
+
+        return redirect(f'/tags/{tag.id}')
+
+
+@app.route('/tags/<tid>/delete', methods=['POST'])
+def delete_tag(tid):
+    tag = Tag.query.get_or_404(tid)
+    db.session.delete(tag)
+    db.session.commit()
+    return redirect(f'/tags')
